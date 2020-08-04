@@ -15,5 +15,7 @@ namespace BricksAppFunction
         public decimal LowestPriceEver { get; set; }
         public string Link { get; set; }
         public DateTime LastUpdate { get; set; }
+        public decimal DailyLowestPrice { get; set; }
+        public bool OnlyBigUpdates { get; set; }
     }
 }

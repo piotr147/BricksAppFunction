@@ -110,7 +110,7 @@ namespace BricksAppFunction
             }
 
             int userId = GetUserId(conn, mail);
-            string query = @"Insert into subscriptions values(@userId, @catalogNumber, 0);";
+            string query = @"Insert into subscriptions values(@userId, @catalogNumber, 0, 0);";
 
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
