@@ -32,8 +32,8 @@ namespace BricksAppFunction
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-            mail = mail ?? data?.mail;
-            url = url ?? data?.url;
+            mail ??= data?.mail;
+            url ??= data?.url;
             if(url == null || mail == null)
             {
                 return new BadRequestResult();
@@ -42,7 +42,7 @@ namespace BricksAppFunction
             try
             {
                 int catalogNumber = GetCatalogNumber(url);
-                var str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+                string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
                 using (SqlConnection conn = new SqlConnection(str))
                 {
                     conn.Open();
@@ -69,13 +69,9 @@ namespace BricksAppFunction
         {
             string query = @"select count(*) from Sets where number = @catalogNumber;";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
-
-                // Execute the command and log the # rows affected.
-                return (int)cmd.ExecuteScalar() > 0;
-            }
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            return (int)cmd.ExecuteScalar() > 0;
         }
 
         private static int GetCatalogNumber(string url)
@@ -92,20 +88,17 @@ namespace BricksAppFunction
 
         private async static Task AddNewSet(SqlConnection conn, LegoSet set)
         {
-            string query = @$"insert into sets values(@number, @name, @series, @url, @lowestPrice, @lowestPriceEver, @lastUpdate, null);";
+            string query = @$"insert into sets values(@number, @name, @series, @url, @lowestPrice, @lowestPriceEver, @lastUpdate, @lowestPrice, 100000);";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@number", SqlDbType.Int).Value = set.Number;
-                cmd.Parameters.Add("@name", SqlDbType.VarChar).Value = set.Name;
-                cmd.Parameters.Add("@series", SqlDbType.VarChar).Value = set.Series;
-                cmd.Parameters.Add("@url", SqlDbType.VarChar).Value = set.Link;
-                cmd.Parameters.Add("@lowestPrice", SqlDbType.Float).Value = set.LowestPrice;
-                cmd.Parameters.Add("@lowestPriceEver", SqlDbType.Float).Value = set.LowestPriceEver;
-                cmd.Parameters.Add("@lastUpdate", SqlDbType.DateTime).Value = DateTime.Now;
-
-                cmd.ExecuteScalar();
-            }
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@number", SqlDbType.Int).Value = set.Number;
+            cmd.Parameters.Add("@name", SqlDbType.VarChar).Value = set.Name;
+            cmd.Parameters.Add("@series", SqlDbType.VarChar).Value = set.Series;
+            cmd.Parameters.Add("@url", SqlDbType.VarChar).Value = set.Link;
+            cmd.Parameters.Add("@lowestPrice", SqlDbType.Float).Value = set.LowestPrice;
+            cmd.Parameters.Add("@lowestPriceEver", SqlDbType.Float).Value = set.LowestPriceEver;
+            cmd.Parameters.Add("@lastUpdate", SqlDbType.DateTime).Value = DateTime.Now;
+            cmd.ExecuteScalar();
         }
 
         private static void AddNewSubscription(SqlConnection conn, string mail, int catalogNumber)
@@ -119,13 +112,10 @@ namespace BricksAppFunction
             int userId = GetUserId(conn, mail);
             string query = @"Insert into subscriptions values(@userId, @catalogNumber, 0);";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
-                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
-
-                cmd.ExecuteScalar();
-            }
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+            cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            cmd.ExecuteScalar();
         }
 
         private static bool SubscriptionAlreadyExists(SqlConnection conn, string mail, int catalogNumber)
@@ -135,13 +125,11 @@ namespace BricksAppFunction
                 join subscribers s2 on s2.id = s1.subscriberid
                 where s2.mail = @mail and s1.setnumber = @catalogNumber;";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
-                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
+            cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
 
-                return 1 <= (int)cmd.ExecuteScalar();
-            }
+            return 1 <= (int)cmd.ExecuteScalar();
         }
 
         private static void UpdateExistingSubscription(SqlConnection conn, string mail, int catalogNumber)
@@ -153,12 +141,10 @@ namespace BricksAppFunction
                 join subscribers s2 on s2.id = s1.subscriberid
                 where s2.mail = @mail and s1.setnumber = @catalogNumber;";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
-                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
-                cmd.ExecuteNonQuery();
-            }
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
+            cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            cmd.ExecuteNonQuery();
         }
 
         private static int GetUserId(SqlConnection conn, string mail)
@@ -170,28 +156,24 @@ namespace BricksAppFunction
 
             string query = @"select id from Subscribers where mail = @mail and isdeleted = 0;";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar, 50).Value = mail;
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar, 50).Value = mail;
 
-                return (int)cmd.ExecuteScalar();
-            }
+            return (int)cmd.ExecuteScalar();
         }
 
         private static void AddNewUser(SqlConnection conn, string mail)
         {
             string query = @"insert into Subscribers values(@mail, 0);";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar, 50).Value = mail;
+            try
             {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar, 50).Value = mail;
-                try
-                {
-                    cmd.ExecuteScalar();
-                }
-                catch (Exception e)
-                {
-                }
+                cmd.ExecuteScalar();
+            }
+            catch (Exception e)
+            {
             }
         }
     }

@@ -1,15 +1,16 @@
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net.Http;
-using System.Data.SqlClient;
-using System.Net;
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
+using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BricksAppFunction
 {
@@ -24,23 +25,21 @@ namespace BricksAppFunction
 
             string mail = req.Query["mail"];
 
-            var str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
-            using (SqlConnection conn = new SqlConnection(str))
+            string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+            using SqlConnection conn = new SqlConnection(str);
+            conn.Open();
+
+            if (!DbUtils.UserExists(conn, mail))
             {
-                conn.Open();
-
-                if(!DbUtils.UserExists(conn, mail))
-                {
-                    return new HttpResponseMessage(HttpStatusCode.BadRequest);
-                }
-
-                List<string> subscribedSets = GetUsersSets(conn, mail);
-                var json = JsonConvert.SerializeObject(new { sets = subscribedSets }, Formatting.Indented);
-                return new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(json, Encoding.UTF8, "application/json")
-                };
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
             }
+
+            List<string> subscribedSets = GetUsersSets(conn, mail);
+            var json = JsonConvert.SerializeObject(new { sets = subscribedSets }, Formatting.Indented);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
         }
 
         private static List<string> GetUsersSets(SqlConnection conn, string mail)
@@ -54,12 +53,10 @@ namespace BricksAppFunction
                 join subscribers s2 on s2.id = s1.subscriberid
                 where s2.mail = @mail";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
 
-                return ReadSets(cmd.ExecuteReader());
-            }
+            return ReadSets(cmd.ExecuteReader());
         }
 
         private static List<string> ReadSets(SqlDataReader reader)

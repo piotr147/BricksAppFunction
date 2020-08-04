@@ -14,17 +14,17 @@ namespace BricksAppFunction
 {
     public static class MonitorSubscriptions
     {
-        private const int HourOfDailyReport = 3; // It's Azure's hour, not ours
+        private const int HourOfDailyReport = 22; // It's Azure's hour, not ours
         private static readonly SendGridClient _client = new SendGridClient(Environment.GetEnvironmentVariable("sendgrid_key"));
 
         [FunctionName("MonitorSubscriptions")]
-        public async static Task Run([TimerTrigger("0 15 */1 * * *")]TimerInfo myTimer, ILogger log)
+        public async static Task Run([TimerTrigger("0 0 4-22 * * *")]TimerInfo myTimer, ILogger log)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            var str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+            string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
             using (SqlConnection conn = new SqlConnection(str))
             {
                 conn.Open();
@@ -40,6 +40,7 @@ namespace BricksAppFunction
             log.LogInformation($"Stopwatch: {stopwatch.ElapsedMilliseconds}");
             if (TimeForDailyReport())
             {
+                DbUtils.ArchiveSets();
                 await SendPerformanceLogEmail((int)stopwatch.ElapsedMilliseconds);
             }
         }
@@ -48,13 +49,9 @@ namespace BricksAppFunction
         {
             string query = @"select * from Sets where number in (select setnumber from subscriptions where isdeleted = 0);";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                using(SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    return ReadSetsFromQueryResults(reader);
-                }
-            }
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            using SqlDataReader reader = cmd.ExecuteReader();
+            return ReadSetsFromQueryResults(reader);
         }
 
         private static List<LegoSet> ReadSetsFromQueryResults(SqlDataReader reader)
@@ -107,29 +104,29 @@ namespace BricksAppFunction
         {
             foreach (LegoSet set in updatedSets)
             {
-                string query = $@"update Sets set lowestPrice = @lowestPrice
-                                    , lowestPriceEver = @lowestPriceEver
-                                    , lastLowestPrice = @lastLowestPrice
-                                    where number = @catalogNumber;";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.Add("@lowestPrice", SqlDbType.Float).Value = set.LowestPrice;
-                    cmd.Parameters.Add("@lowestPriceEver", SqlDbType.Float).Value = set.LowestPriceEver;
-                    cmd.Parameters.Add("@lastLowestPrice", SqlDbType.Float).Value = set.LastLowestPrice;
-                    cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = set.Number;
-                    cmd.ExecuteNonQuery();
-                }
+                string query = $@"
+                    update Sets set lowestPrice = @lowestPrice
+                    ,lowestPriceEver = @lowestPriceEver
+                    ,lastLowestPrice = @lastLowestPrice
+                    where number = @catalogNumber;";
+
+                using SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.Add("@lowestPrice", SqlDbType.Float).Value = set.LowestPrice;
+                cmd.Parameters.Add("@lowestPriceEver", SqlDbType.Float).Value = set.LowestPriceEver;
+                cmd.Parameters.Add("@lastLowestPrice", SqlDbType.Float).Value = set.LastLowestPrice;
+                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = set.Number;
+                cmd.ExecuteNonQuery();
             }
         }
 
         private static void UpdatesLastUpdates(SqlConnection conn)
         {
-            string query = $@"update Sets set lastUpdate = @lastUpdate;";
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@lastUpdate", SqlDbType.DateTime).Value = DateTime.Now;
-                cmd.ExecuteNonQuery();
-            }
+            string query = $@"
+                update Sets set lastUpdate = @lastUpdate;
+                update Sets set dailyLowestPrice = lowestPrice where lowestPrice < dailyLowestPrice";
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@lastUpdate", SqlDbType.DateTime).Value = DateTime.Now;
+            cmd.ExecuteNonQuery();
         }
 
         private static Dictionary<int, (string plain, string html)> GetMessagesForUpdatedSets(List<LegoSet> updatedSets)
@@ -147,12 +144,11 @@ namespace BricksAppFunction
             return messages;
         }
 
-        private static string GetUpdateHtmlMessage(LegoSet set)
-        {
-            return $@"Lego {set.Series} - {set.Number} - <strong>{set.Name}</strong>
-                        {PriceInfoLine(set)}
-                        <a href=""{set.Link}"">{set.Link}</a>";
-        }
+        private static string GetUpdateHtmlMessage(LegoSet set) =>
+            $@"
+                Lego {set.Series} - {set.Number} - <strong>{set.Name}</strong>
+                {PriceInfoLine(set)}
+                <a href=""{set.Link}"">{set.Link}</a>";
 
         private static string GetUpdatePlainMessage(LegoSet set)
         {
@@ -182,10 +178,8 @@ namespace BricksAppFunction
 
             using(SqlCommand cmd = new SqlCommand(query, conn))
             {
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    subscriptions = ReadSubscriptions(reader);
-                }
+                using SqlDataReader reader = cmd.ExecuteReader();
+                subscriptions = ReadSubscriptions(reader);
             }
 
             return subscriptions;
@@ -204,7 +198,7 @@ namespace BricksAppFunction
 
         private async static Task SendEmails(List<(string mail, int catalogNumber)> subscriptions, Dictionary<int, (string plain, string html)> messages)
         {
-            string subject = $"Lego update {DateTime.Now.Day}.{DateTime.Now.Month}";
+            string subject = $"Lego update {DateTime.Now.Day:D2}.{DateTime.Now.Month:D2}";
             List<string> mails = subscriptions.Select(s => s.mail).Distinct().ToList();
             var senderMail = new EmailAddress("piotr.koskiewicz@gmail.com", "Piotr");
 

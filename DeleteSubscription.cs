@@ -26,21 +26,17 @@ namespace BricksAppFunction
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-            mail = mail ?? data?.mail;
+            mail ??= data?.mail;
             catalogNumberString = catalogNumberString ?? data?.number;
             if(!int.TryParse(catalogNumberString, out int catalogNumber))
             {
                 return new BadRequestResult();
             }
 
-            var str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
-            using (SqlConnection conn = new SqlConnection(str))
-            {
-                conn.Open();
-
-                DeleteSubscriptionIfExists(conn, mail, catalogNumber);
-
-            }
+            string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+            using SqlConnection conn = new SqlConnection(str);
+            conn.Open();
+            DeleteSubscriptionIfExists(conn, mail, catalogNumber);
 
             return new OkObjectResult("Subscription has been deleted");
         }
@@ -54,12 +50,10 @@ namespace BricksAppFunction
                 join subscribers s2 on s2.id = s1.subscriberid
                 where s2.mail = @mail and s1.setnumber = @catalogNumber;";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
-                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
-                cmd.ExecuteNonQuery();
-            }
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
+            cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            cmd.ExecuteNonQuery();
         }
     }
 }

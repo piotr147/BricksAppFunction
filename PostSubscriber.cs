@@ -28,21 +28,19 @@ namespace BricksAppFunction
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-            mail = mail ?? data?.mail;
+            mail ??= data?.mail;
 
-            var str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+            string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
 
-            using (SqlConnection conn = new SqlConnection(str))
+            using SqlConnection conn = new SqlConnection(str);
+            conn.Open();
+
+            if (DbUtils.UserExists(conn, mail))
             {
-                conn.Open();
-
-                if (DbUtils.UserExists(conn, mail))
-                {
-                    return new BadRequestResult();
-                }
-
-                AddNewUser(conn, mail);
+                return new BadRequestResult();
             }
+
+            AddNewUser(conn, mail);
 
             stopwatch.Stop();
             return new OkObjectResult($"You mail has been added ({stopwatch.ElapsedMilliseconds})");
@@ -52,16 +50,14 @@ namespace BricksAppFunction
         {
             string query = @"insert into Subscribers values(@mail, 0);";
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@mail", SqlDbType.VarChar, 50).Value = mail;
+            try
             {
-                cmd.Parameters.Add("@mail", SqlDbType.VarChar, 50).Value = mail;
-                try
-                {
-                    cmd.ExecuteScalar();
-                }
-                catch (Exception e)
-                {
-                }
+                cmd.ExecuteScalar();
+            }
+            catch (Exception e)
+            {
             }
         }
     }
