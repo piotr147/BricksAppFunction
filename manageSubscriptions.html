@@ -9,53 +9,71 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   <script type="text/javascript">
     function onSubscriptionSubmit() {
-        console.log("xd");
-        let request = new XMLHttpRequest();
-                // let postUrl = "http://localhost:7071/api/AddSubscription";
-                let postUrl = "http://BricksApp.azurewebsites.net/api/AddSubscription";
+        let urlRegex = new RegExp("https://promoklocki\\.pl/lego-.*\\d{5}-.*p\\d*");
+        // let postUrl = "http://localhost:7071/api/AddSubscription";
+        let postUrl = "https://BricksApp.azurewebsites.net/api/AddSubscription";
 
-                let mail = document.getElementById("subscriptionInputEmail").value;
-                let url = document.getElementById("subscriptionUrl").value;
+        let mail = document.getElementById("subscriptionInputEmail").value;
+        let promoklockiUrlErrorMessage = document.getElementById("promoklockiUrlErrorMessage");
+        let addSubscriptionSuccessMessage = document.getElementById("addSubscriptionSuccessMessage");
+        let addSubscriptionFailMessage = document.getElementById("addSubscriptionFailMessage");
+        let urlElement = document.getElementById("subscriptionUrl");
+        let url = urlElement.value;
 
-                var data = JSON.stringify({"mail": mail, "url": url});
+        console.log(urlRegex.test(url));
+        if(!urlRegex.test(url)) {
+            promoklockiUrlErrorMessage.style.display = "block";
+            addSubscriptionSuccessMessage.style.display = "none";
+            addSubscriptionFailMessage.style.display = "none";
+            return;
+        }
 
-                var saveData = $.ajax({
-                    type: "POST",
-                    url: postUrl,
-                    data: data.toString(),
-                    dataType: "text\plain",
-                    success: function(resultData){
-                        console.log("success");
-                    }
-                });
+        var data = JSON.stringify({"mail": mail, "url": url});
 
-                document.getElementById("subscriptionUrl").value = "";
-                document.getElementById("subscriptionInputEmail").value ="";
+        var saveData = $.ajax({
+            type: "POST",
+            url: postUrl,
+            data: data.toString(),
+            dataType: "text",
+            success: function(resultData){
+                console.log("success");
+                addSubscriptionSuccessMessage.style.display = "block";
+                addSubscriptionFailMessage.style.display = "none";
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown){
+                console.log("error");
+                console.log(textStatus);
+                console.log(errorThrown);
+                addSubscriptionSuccessMessage.style.display = "none";
+                addSubscriptionFailMessage.style.display = "block";
+            }
+        });
+
+        document.getElementById("subscriptionUrl").value = "";
+        promoklockiUrlErrorMessage.style.display = "none";
     }
 
     function onSubscriptionDelete() {
-        console.log("xd");
-        let request = new XMLHttpRequest();
-                //let postUrl = "http://localhost:7071/api/DeleteSubscription";
-                let postUrl = "http://BricksApp.azurewebsites.net/api/DeleteSubscription";
+        //let postUrl = "http://localhost:7071/api/DeleteSubscription";
+        let postUrl = "https://BricksApp.azurewebsites.net/api/DeleteSubscription";
 
-                let mail = document.getElementById("deleteSubscriptionInputEmail").value;
-                let number = document.getElementById("deleteSubscriptionNumber").value;
+        let mail = document.getElementById("deleteSubscriptionInputEmail").value;
+        let number = document.getElementById("deleteSubscriptionNumber").value;
 
-                var data = JSON.stringify({"mail": mail, "number": number});
+        var data = JSON.stringify({"mail": mail, "number": number});
 
-                var saveData = $.ajax({
-                    type: "POST",
-                    url: postUrl,
-                    data: data.toString(),
-                    dataType: "text\plain",
-                    success: function(resultData){
-                        console.log("success");
-                    }
-                });
+        var saveData = $.ajax({
+            type: "POST",
+            url: postUrl,
+            data: data.toString(),
+            dataType: "text\plain",
+            success: function(resultData){
+                console.log("success");
+            }
+        });
 
-                document.getElementById("deleteSubscriptionNumber").value = "";
-                document.getElementById("deleteSubscriptionInputEmail").value ="";
+        document.getElementById("deleteSubscriptionNumber").value = "";
+        document.getElementById("deleteSubscriptionInputEmail").value ="";
     }
 
     window.onload = () => {
@@ -78,8 +96,11 @@
         <br/>
         <label for="subscriptionUrl">Url of set you want to subscribe</label>
         <input type="text" class="form-control" id="subscriptionUrl" aria-describedby="emailHelp" placeholder="Enter url from promoklocki" />
+        <p id="promoklockiUrlErrorMessage" style="color:red; display:none;">Link to Promoklocki is not valid. Correct example: https://promoklocki.pl/lego-creator-expert-10277-lokomotywa-crocodile-p20638</p>
         <br/>
         <button type="submitAddSubscription" class="btn btn-primary" id="submitButton">Submit</button>
+        <p id="addSubscriptionSuccessMessage" style="color:green; display:none;">Subscription added successfully</p>
+        <p id="addSubscriptionFailMessage" style="color:red; display:none;">Something went wrong</p>
     </div>
     <hr/>
     <div class="form-group">

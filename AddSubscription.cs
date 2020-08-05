@@ -17,6 +17,7 @@ namespace BricksAppFunction
     public static class AddSubscription
     {
         private static readonly Regex CatalogNumberRegex = new Regex(@"-\d{5}-");
+        private static readonly Regex PromoklockiUrlRegex = new Regex(@"https://promoklocki\.pl/lego-.*\d{5}-.*p\d*");
 
         [FunctionName("AddSubscription")]
         public static async Task<IActionResult> Run(
@@ -34,7 +35,7 @@ namespace BricksAppFunction
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             mail ??= data?.mail;
             url ??= data?.url;
-            if(url == null || mail == null)
+            if(url == null || mail == null || !IsUrlCorrec(url))
             {
                 return new BadRequestResult();
             }
@@ -64,6 +65,8 @@ namespace BricksAppFunction
                 return new OkObjectResult(e.Message);
             }
         }
+
+        private static bool IsUrlCorrec(string url) => PromoklockiUrlRegex.IsMatch(url);
 
         private static bool SetIsInDb(SqlConnection conn, int catalogNumber)
         {
