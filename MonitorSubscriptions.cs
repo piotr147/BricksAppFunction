@@ -18,7 +18,7 @@ namespace BricksAppFunction
         private static readonly SendGridClient _client = new SendGridClient(Environment.GetEnvironmentVariable("sendgrid_key"));
 
         [FunctionName("MonitorSubscriptions")]
-        public async static Task Run([TimerTrigger("0 0 4-22 * * *")]TimerInfo myTimer, ILogger log)
+        public async static Task Run([TimerTrigger("0 0 4-23 * * *")]TimerInfo myTimer, ILogger log)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
