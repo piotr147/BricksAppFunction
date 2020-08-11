@@ -21,21 +21,21 @@ namespace BricksAppFunction
 
         [FunctionName("AddSubscription")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string mail = req.Query["mail"];
-            string url = req.Query["url"];
-
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
-            mail ??= data?.mail;
-            url ??= data?.url;
-            if(url == null || mail == null || !IsUrlCorrec(url))
+
+            string mail = data?.mail;
+            string url = data?.url;
+            bool onlyBigUpdates = data?.onlyBigUpdates ?? false;
+
+            if (url == null || mail == null || !IsUrlCorrec(url))
             {
                 return new BadRequestResult();
             }
@@ -53,7 +53,7 @@ namespace BricksAppFunction
                         await AddNewSet(conn, set);
                     }
 
-                    AddNewSubscription(conn, mail, catalogNumber);
+                    AddNewSubscription(conn, mail, catalogNumber, onlyBigUpdates);
 
                 }
 
@@ -62,7 +62,7 @@ namespace BricksAppFunction
             }
             catch (Exception e)
             {
-                return new OkObjectResult(e.Message);
+                return new BadRequestResult();
             }
         }
 
@@ -91,7 +91,7 @@ namespace BricksAppFunction
 
         private async static Task AddNewSet(SqlConnection conn, LegoSet set)
         {
-            string query = @$"insert into sets values(@number, @name, @series, @url, @lowestPrice, @lowestPriceEver, @lastUpdate, @lowestPrice, 100000);";
+            string query = @$"insert into sets values(@number, @name, @series, @url, @lowestPrice, @lowestPriceEver, @lastUpdate, @lowestPrice, 100000, '', @lowestPrice);";
 
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.Add("@number", SqlDbType.Int).Value = set.Number;
@@ -104,20 +104,21 @@ namespace BricksAppFunction
             cmd.ExecuteScalar();
         }
 
-        private static void AddNewSubscription(SqlConnection conn, string mail, int catalogNumber)
+        private static void AddNewSubscription(SqlConnection conn, string mail, int catalogNumber, bool onlyBigUpdates)
         {
             if(SubscriptionAlreadyExists(conn, mail, catalogNumber))
             {
-                UpdateExistingSubscription(conn, mail, catalogNumber);
+                UpdateExistingSubscription(conn, mail, catalogNumber, onlyBigUpdates);
                 return;
             }
 
             int userId = GetUserId(conn, mail);
-            string query = @"Insert into subscriptions values(@userId, @catalogNumber, 0, 0);";
+            string query = @"Insert into subscriptions values(@userId, @catalogNumber, 0, @onlyBigUpdates);";
 
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
             cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            cmd.Parameters.Add("@onlyBigUpdates", SqlDbType.Bit).Value = onlyBigUpdates;
             cmd.ExecuteScalar();
         }
 
@@ -135,11 +136,12 @@ namespace BricksAppFunction
             return 1 <= (int)cmd.ExecuteScalar();
         }
 
-        private static void UpdateExistingSubscription(SqlConnection conn, string mail, int catalogNumber)
+        private static void UpdateExistingSubscription(SqlConnection conn, string mail, int catalogNumber, bool onlyBigUpdates)
         {
             string query = @"
                 update subscriptions
                 set isdeleted = 0
+                , onlyBigUpdates = @onlyBigUpdates
                 from subscriptions s1
                 join subscribers s2 on s2.id = s1.subscriberid
                 where s2.mail = @mail and s1.setnumber = @catalogNumber;";
@@ -147,6 +149,7 @@ namespace BricksAppFunction
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.Add("@mail", SqlDbType.VarChar).Value = mail;
             cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = catalogNumber;
+            cmd.Parameters.Add("@onlyBigUpdates", SqlDbType.Int).Value = onlyBigUpdates;
             cmd.ExecuteNonQuery();
         }
 

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BricksAppFunction
 {
@@ -13,9 +11,17 @@ namespace BricksAppFunction
         public decimal LowestPrice { get; set; }
         public decimal? LastLowestPrice { get; set; }
         public decimal LowestPriceEver { get; set; }
+        public decimal LastReportedLowestPrice { get; set; }
         public string Link { get; set; }
         public DateTime LastUpdate { get; set; }
         public decimal DailyLowestPrice { get; set; }
         public bool OnlyBigUpdates { get; set; }
+        public string LowestShop { get; set; }
+
+        public LegoSet WithLastReportedLowestPrice(decimal price)
+        {
+            LastReportedLowestPrice = price;
+            return this;
+        }
     }
 }

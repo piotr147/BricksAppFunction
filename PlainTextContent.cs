@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang=""en"">
 <head>
-  <title>Bootstrap Example</title>
+  <title>Bricks App</title>
   <meta charset=""utf-8"">
   <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
   <link rel=""stylesheet"" href=""https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"">
@@ -24,6 +24,10 @@
         let addSubscriptionFailMessage = document.getElementById(""addSubscriptionFailMessage"");
         let urlElement = document.getElementById(""subscriptionUrl"");
         let url = urlElement.value;
+        let onlyBigUpdates = document.getElementById(""onlyBigUpdatesCheckbox"").checked;
+
+        addSubscriptionSuccessMessage.style.display = ""none"";
+        addSubscriptionFailMessage.style.display = ""none"";
 
         console.log(urlRegex.test(url));
         if(!urlRegex.test(url)) {
@@ -33,7 +37,7 @@
             return;
         }
 
-        var data = JSON.stringify({""mail"": mail, ""url"": url});
+        var data = JSON.stringify({""mail"": mail, ""url"": url, ""onlyBigUpdates"": onlyBigUpdates});
 
         var saveData = $.ajax({
             type: ""POST"",
@@ -44,6 +48,8 @@
                 console.log(""success"");
                 addSubscriptionSuccessMessage.style.display = ""block"";
                 addSubscriptionFailMessage.style.display = ""none"";
+                document.getElementById(""onlyBigUpdatesCheckbox"").checked = false;
+                document.getElementById(""subscriptionUrl"").value = """";
             },
             error: function(XMLHttpRequest, textStatus, errorThrown){
                 console.log(""error"");
@@ -54,7 +60,6 @@
             }
         });
 
-        document.getElementById(""subscriptionUrl"").value = """";
         promoklockiUrlErrorMessage.style.display = ""none"";
     }
 
@@ -102,6 +107,11 @@
         <label for=""subscriptionUrl"">Url of set you want to subscribe</label>
         <input type=""text"" class=""form-control"" id=""subscriptionUrl"" aria-describedby=""emailHelp"" placeholder=""Enter url from promoklocki"" />
         <p id=""promoklockiUrlErrorMessage"" style=""color:red; display:none;"">Link to Promoklocki is not valid. Correct example: https://promoklocki.pl/lego-creator-expert-10277-lokomotywa-crocodile-p20638</p>
+        <br/>
+        <div class=""form-check"">
+            <input type=""checkbox"" class=""form-check-input"" id=""onlyBigUpdatesCheckbox"">
+            <label class=""form-check-label"" for=""onlyBigUpdatesCheckbox"">Only big updates</label>
+        </div>
         <br/>
         <button type=""submitAddSubscription"" class=""btn btn-primary"" id=""submitButton"">Submit</button>
         <p id=""addSubscriptionSuccessMessage"" style=""color:green; display:none;"">Subscription added successfully</p>
