@@ -104,7 +104,7 @@ namespace BricksAppFunction
 
             return @$"
                 <p style=""color:{color};"">
-                    Price {verbToUse} from {set.LastLowestPrice} to {set.LowestPrice}
+                    <strong>Price {verbToUse} from {set.LastLowestPrice} to {set.LowestPrice}</strong>
                 </p>";
         }
 
