@@ -180,7 +180,39 @@ namespace BricksAppFunction
                 Lego {set.Series} - {set.Number} - <strong>{set.Name}</strong>
                 {set.LowestShop}
                 {PriceInfoLine(set)}
+                {EventualLowestPriceEverHtml(set)}
                 <a href=""{set.Link}"">{set.Link}</a>";
+
+        private static string PriceInfoLine(LegoSet set)
+        {
+            string verbToUse = set.LowestPrice < set.LastLowestPrice ? "decreased" : "increased";
+            string color = set.LowestPrice < set.LastLowestPrice
+                ? ColorForPriceDecrease(set)
+                : ColorForPriceIncrease(set);
+
+            return @$"
+                <p style=""color:{color};"">
+                    Price {verbToUse} from {set.LastLowestPrice} to {set.LowestPrice}
+                </p>";
+        }
+
+        private static string ColorForPriceDecrease(LegoSet set) =>
+            IsBigUpdate(set)
+                ? "Lime"
+                : "PaleGreen";
+
+        private static string ColorForPriceIncrease(LegoSet set) =>
+            IsBigUpdate(set)
+                ? "Red"
+                : "Crimson";
+
+        private static string EventualLowestPriceEverHtml(LegoSet set) =>
+            set.LowestPrice > set.LowestPriceEver
+                ? ""
+                : @"
+                    <p style=""color:yellow;"">
+                        <strong>LOWEST PRICE EVER</strong>
+                    </p>";
 
         private static string GetUpdatePlainMessage(LegoSet set)
         {
@@ -189,22 +221,18 @@ namespace BricksAppFunction
                 Lego {set.Series} - {set.Number} - {set.Name}\n
                 {set.LowestShop}\n
                 Price {verbToUse} from {set.LastLowestPrice} to {set.LowestPrice}\n
+                {EventualLowestPriceEverPlain(set)}
                 {set.Link}";
         }
 
-        private static string PriceInfoLine(LegoSet set)
-        {
-            string verbToUse = set.LowestPrice < set.LastLowestPrice ? "decreased" : "increased";
-            string color = set.LowestPrice < set.LastLowestPrice ? "green" : "red";
-            return @$"
-                <p style=""color:{color};"">
-                    Price {verbToUse} from {set.LastLowestPrice} to {set.LowestPrice}
-                </p>";
-        }
+        private static string EventualLowestPriceEverPlain(LegoSet set) =>
+            set.LowestPrice > set.LowestPriceEver
+                ? ""
+                : @"LOWEST PRICE EVER\n";
 
         private static bool CheckForBigUpdates(LegoSet set)
         {
-            if(Math.Abs(set.LowestPrice - set.LastReportedLowestPrice) / set.LowestPrice > 0.01m)
+            if(IsBigUpdate(set))
             {
                 set.LastReportedLowestPrice = set.LowestPrice;
                 return true;
@@ -212,6 +240,9 @@ namespace BricksAppFunction
 
             return false;
         }
+
+        private static bool IsBigUpdate(LegoSet set) =>
+            Math.Abs(set.LowestPrice - set.LastReportedLowestPrice) / set.LowestPrice > 0.01m;
 
         private static List<Subscription> GetActiveSubscriptions(SqlConnection conn)
         {
