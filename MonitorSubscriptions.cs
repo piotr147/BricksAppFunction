@@ -28,12 +28,14 @@ namespace BricksAppFunction
             using (SqlConnection conn = new SqlConnection(str))
             {
                 conn.Open();
-                List<LegoSet> sets = GetSetsOfActiveSubscriptions(conn);
+                List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn);
                 List<LegoSet> updatedSets = await GetSetsToUpdate(sets);
-                UpdateWithInfoFromDb(conn, updatedSets);
+
+                DbUtils.UpdateWithInfoFromDb(conn, updatedSets);
                 Dictionary<int, MailMessage> messages = GetMessagesForUpdatedSets(updatedSets);
-                List<Subscription> subscriptions = GetActiveSubscriptions(conn);
-                UpdateSetsInDb(conn, updatedSets);
+                List<Subscription> subscriptions = DbUtils.GetActiveSubscriptions(conn);
+
+                DbUtils.UpdateSetsInDb(conn, updatedSets);
                 await SendEmails(subscriptions, messages);
             }
 
@@ -44,39 +46,6 @@ namespace BricksAppFunction
                 DbUtils.ArchiveSets();
                 await SendPerformanceLogEmail((int)stopwatch.ElapsedMilliseconds);
             }
-        }
-
-        private static List<LegoSet> GetSetsOfActiveSubscriptions(SqlConnection conn)
-        {
-            string query = @"select * from Sets where number in (select setnumber from subscriptions where isdeleted = 0);";
-
-            using SqlCommand cmd = new SqlCommand(query, conn);
-            using SqlDataReader reader = cmd.ExecuteReader();
-            return ReadSetsFromQueryResults(reader);
-        }
-
-        private static List<LegoSet> ReadSetsFromQueryResults(SqlDataReader reader)
-        {
-            List<LegoSet> sets = new List<LegoSet>();
-
-            while (reader.Read())
-            {
-                sets.Add(
-                new LegoSet
-                {
-                    Number = reader.GetInt32(0),
-                    Name = reader.GetString(1),
-                    Series = reader.GetString(2),
-                    Link = reader.GetString(3),
-                    LowestPrice = (decimal)reader.GetDouble(4),
-                    LowestPriceEver = (decimal)reader.GetDouble(5),
-                    LastUpdate = reader.GetDateTime(6),
-                    LastLowestPrice = reader.IsDBNull(7) ? null : (decimal?)reader.GetFloat(7),
-                    LastReportedLowestPrice = (decimal)reader.GetFloat(10)
-                });
-            }
-
-            return sets;
         }
 
         private async static Task<List<LegoSet>> GetSetsToUpdate(List<LegoSet> sets)
@@ -96,64 +65,6 @@ namespace BricksAppFunction
             return updatedSets;
         }
 
-        private static void UpdateWithInfoFromDb(SqlConnection conn, List<LegoSet> updatedSets)
-        {
-            foreach (var set in updatedSets)
-            {
-                UpdateLastReportedPrice(conn, set);
-            }
-        }
-
-        private static void UpdateLastReportedPrice(SqlConnection conn, LegoSet set)
-        {
-            string query = @"
-                select LastReportedLowestPrice from sets
-                where number = @number";
-
-            using SqlCommand cmd = new SqlCommand(query, conn);
-            cmd.Parameters.Add("@number", SqlDbType.Float).Value = set.Number;
-            set.WithLastReportedLowestPrice(Convert.ToDecimal(cmd.ExecuteScalar()));
-        }
-
-        private static void UpdateSetsInDb(SqlConnection conn, List<LegoSet> updatedSets)
-        {
-            UpdatePricesAndShops(conn, updatedSets);
-            UpdatesLastUpdates(conn);
-        }
-
-        private static void UpdatePricesAndShops(SqlConnection conn, List<LegoSet> updatedSets)
-        {
-            foreach (LegoSet set in updatedSets)
-            {
-                string query = $@"
-                    update Sets set lowestPrice = @lowestPrice
-                    ,lowestPriceEver = @lowestPriceEver
-                    ,lastLowestPrice = @lastLowestPrice
-                    ,lowestShop = @lowestShop
-                    ,lastReportedLowestPrice = @lastReportedLowestPrice
-                    where number = @catalogNumber;";
-
-                using SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.Add("@lowestPrice", SqlDbType.Float).Value = set.LowestPrice;
-                cmd.Parameters.Add("@lowestPriceEver", SqlDbType.Float).Value = set.LowestPriceEver;
-                cmd.Parameters.Add("@lastLowestPrice", SqlDbType.Float).Value = set.LastLowestPrice;
-                cmd.Parameters.Add("@lowestShop", SqlDbType.VarChar).Value = set.LowestShop ?? string.Empty;
-                cmd.Parameters.Add("@catalogNumber", SqlDbType.Int).Value = set.Number;
-                cmd.Parameters.Add("@lastReportedLowestPrice", SqlDbType.Float).Value = set.LastReportedLowestPrice;
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        private static void UpdatesLastUpdates(SqlConnection conn)
-        {
-            string query = $@"
-                update Sets set lastUpdate = @lastUpdate;
-                update Sets set dailyLowestPrice = lowestPrice where lowestPrice < dailyLowestPrice";
-            using SqlCommand cmd = new SqlCommand(query, conn);
-            cmd.Parameters.Add("@lastUpdate", SqlDbType.DateTime).Value = DateTime.Now;
-            cmd.ExecuteNonQuery();
-        }
-
         private static Dictionary<int, MailMessage> GetMessagesForUpdatedSets(List<LegoSet> updatedSets)
         {
             var messages = new Dictionary<int, MailMessage>();
@@ -164,7 +75,8 @@ namespace BricksAppFunction
                 {
                     messages.Add(
                         set.Number,
-                        new MailMessage {
+                        new MailMessage
+                        {
                             Plain = GetUpdatePlainMessage(set),
                             Html = GetUpdateHtmlMessage(set),
                             IsBigUpdate = CheckForBigUpdates(set)
@@ -199,7 +111,7 @@ namespace BricksAppFunction
         private static string ColorForPriceDecrease(LegoSet set) =>
             IsBigUpdate(set)
                 ? "Lime"
-                : "PaleGreen";
+                : "MediumSeaGreen";
 
         private static string ColorForPriceIncrease(LegoSet set) =>
             IsBigUpdate(set)
@@ -232,7 +144,7 @@ namespace BricksAppFunction
 
         private static bool CheckForBigUpdates(LegoSet set)
         {
-            if(IsBigUpdate(set))
+            if (IsBigUpdate(set))
             {
                 set.LastReportedLowestPrice = set.LowestPrice;
                 return true;
@@ -243,40 +155,6 @@ namespace BricksAppFunction
 
         private static bool IsBigUpdate(LegoSet set) =>
             Math.Abs(set.LowestPrice - set.LastReportedLowestPrice) / set.LowestPrice > 0.01m;
-
-        private static List<Subscription> GetActiveSubscriptions(SqlConnection conn)
-        {
-            var subscriptions = new List<Subscription>();
-            string query = @"
-                select s2.mail, s1.SetNumber, s1.onlyBigUpdates from subscriptions s1
-                join subscribers s2 on s2.id = s1.subscriberid
-                where s1.isdeleted = 0;";
-
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                using SqlDataReader reader = cmd.ExecuteReader();
-                subscriptions = ReadSubscriptions(reader);
-            }
-
-            return subscriptions;
-        }
-
-        private static List<Subscription> ReadSubscriptions(SqlDataReader reader)
-        {
-            var subscriptions = new List<Subscription>();
-            while (reader.Read())
-            {
-                subscriptions.Add(
-                    new Subscription
-                    {
-                        Mail = reader.GetString(0),
-                        CatalogNumber = reader.GetInt32(1),
-                        OnlyBigChanges = reader.GetBoolean(2)
-                    });
-            }
-
-            return subscriptions;
-        }
 
         private async static Task SendEmails(
             List<Subscription> subscriptions,
@@ -297,7 +175,7 @@ namespace BricksAppFunction
                     string plainMessage = string.Join('\n', plainSetsMessages);
                     string htmlMessage = string.Join("<br/><hr/>", htmlSetsMessages);
 
-                    if(string.IsNullOrWhiteSpace(plainMessage) || string.IsNullOrWhiteSpace(htmlMessage))
+                    if (string.IsNullOrWhiteSpace(plainMessage) || string.IsNullOrWhiteSpace(htmlMessage))
                     {
                         continue;
                     }
