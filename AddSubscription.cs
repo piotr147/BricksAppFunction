@@ -11,6 +11,7 @@ using System.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System.Data;
 using System.Diagnostics;
+using BricksAppFunction.Utilities;
 
 namespace BricksAppFunction
 {

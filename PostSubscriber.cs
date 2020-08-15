@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using System.Data.SqlClient;
 using System.Data;
 using System.Diagnostics;
+using BricksAppFunction.Utilities;
 
 namespace BricksAppFunction
 {

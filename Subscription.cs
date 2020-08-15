@@ -2,8 +2,10 @@
 {
     public class Subscription
     {
-        public int CatalogNumber { get; set; }
         public string Mail { get; set; }
-        public bool OnlyBigChanges { get; set; }
+        public int CatalogNumber { get; set; }
+        public string Name { get; set; }
+        public string Series { get; set; }
+        public bool OnlyBigUpdates { get; set; }
     }
 }
