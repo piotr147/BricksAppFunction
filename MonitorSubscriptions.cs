@@ -80,9 +80,9 @@ namespace BricksAppFunction
                         {
                             Plain = GetUpdatePlainMessage(set),
                             Html = GetUpdateHtmlMessage(set),
+                            DiffPercent = CalculateDiffPercent(set),
                             IsBigUpdate = CheckForBigUpdates(set),
-                            IsLowestPrice = IsLowestPrice(set),
-                            DiffPercent = CalculateDiffPercent(set)
+                            IsLowestPriceEver = IsLowestPrice(set)
                         });
                 }
             }
@@ -157,7 +157,7 @@ namespace BricksAppFunction
         }
 
         private static bool IsBigUpdate(LegoSet set) =>
-            CalculateDiffPercent(set) > 0.01f;
+            Math.Abs(CalculateDiffPercent(set)) > 0.01f;
 
         private static bool IsLowestPrice(LegoSet set) =>
             set.LowestPrice <= set.LowestPriceEver;
@@ -180,16 +180,8 @@ namespace BricksAppFunction
                 {
                     List<(int number, bool onlyBig)> setNumbers = subscriptions.Where(s => s.Mail == mail).Select(s => (s.CatalogNumber, s.OnlyBigUpdates)).ToList();
 
-                    List<string> plainSetsMessages = messages
-                        .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate)))
-                        .OrderBy(m => m.Value.DiffPercent)
-                        .Select(m => m.Value.Plain)
-                        .ToList();
-                    List<string> htmlSetsMessages = messages
-                        .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate)))
-                        .OrderBy(m => m.Value.DiffPercent)
-                        .Select(m => m.Value.Html)
-                        .ToList();
+                    List<string> plainSetsMessages = GetPlainMessagesForSpecificSubscriber(setNumbers, messages);
+                    List<string> htmlSetsMessages = GetHtmlMessagesForSpecificSubscriber(setNumbers, messages);
                     string plainMessage = string.Join('\n', plainSetsMessages);
                     string htmlMessage = string.Join("<br/><hr/>", htmlSetsMessages);
 
@@ -210,9 +202,16 @@ namespace BricksAppFunction
 
         private static List<string> GetPlainMessagesForSpecificSubscriber(List<(int number, bool onlyBig)> setNumbers, Dictionary<int, MailMessage> messages) =>
             messages
-                .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate || m.Value.IsLowestPrice)))
+                .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate || m.Value.IsLowestPriceEver)))
                 .OrderBy(m => m.Value.DiffPercent)
                 .Select(m => m.Value.Plain)
+                .ToList();
+
+        private static List<string> GetHtmlMessagesForSpecificSubscriber(List<(int number, bool onlyBig)> setNumbers, Dictionary<int, MailMessage> messages) =>
+            messages
+                .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate || m.Value.IsLowestPriceEver)))
+                .OrderBy(m => m.Value.DiffPercent)
+                .Select(m => m.Value.Html)
                 .ToList();
 
         private static bool TimeForDailyReport() => DateTime.Now.Hour == HourOfDailyReport;
