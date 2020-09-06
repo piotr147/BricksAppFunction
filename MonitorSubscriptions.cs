@@ -29,7 +29,7 @@ namespace BricksAppFunction
             using (SqlConnection conn = new SqlConnection(str))
             {
                 conn.Open();
-                List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn).Where(s => s.Name.Contains("Andy")).ToList();
+                List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn);
                 List<LegoSet> updatedSets = await GetSetsToUpdate(sets);
 
                 DbUtils.UpdateWithInfoFromDb(conn, updatedSets);
