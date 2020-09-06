@@ -29,7 +29,7 @@ namespace BricksAppFunction
             using (SqlConnection conn = new SqlConnection(str))
             {
                 conn.Open();
-                List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn);
+                List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn).Where(s => s.Name.Contains("Andy")).ToList();
                 List<LegoSet> updatedSets = await GetSetsToUpdate(sets);
 
                 DbUtils.UpdateWithInfoFromDb(conn, updatedSets);
@@ -37,7 +37,7 @@ namespace BricksAppFunction
                 List<Subscription> subscriptions = DbUtils.GetActiveSubscriptions(conn);
 
                 DbUtils.UpdateSetsInDb(conn, updatedSets);
-                await SendEmails(subscriptions, messages);
+                await SendEmails(subscriptions, messages, log);
             }
 
             stopwatch.Stop();
@@ -168,7 +168,8 @@ namespace BricksAppFunction
 
         private async static Task SendEmails(
             List<Subscription> subscriptions,
-            Dictionary<int, MailMessage> messages)
+            Dictionary<int, MailMessage> messages,
+            ILogger log)
         {
             string subject = $"Lego update {DateTime.Now.Day:D2}.{DateTime.Now.Month:D2}";
             List<string> mails = subscriptions.Select(s => s.Mail).Distinct().ToList();
@@ -192,10 +193,13 @@ namespace BricksAppFunction
 
                     var receiverMail = new EmailAddress(mail, "Brick buddy");
                     SendGridMessage msg = MailHelper.CreateSingleEmail(senderMail, receiverMail, subject, plainMessage, htmlMessage);
-                    await _client.SendEmailAsync(msg);
+                    var result = await _client.SendEmailAsync(msg);
+
+                    log.LogInformation($"{mail} Mail result: {result.StatusCode}, body: {result.Body}");
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    log.LogError(e.Message);
                 }
             }
         }

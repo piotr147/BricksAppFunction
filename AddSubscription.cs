@@ -92,7 +92,7 @@ namespace BricksAppFunction
 
         private async static Task AddNewSet(SqlConnection conn, LegoSet set)
         {
-            string query = @$"insert into sets values(@number, @name, @series, @url, @lowestPrice, @lowestPriceEver, @lastUpdate, @lowestPrice, 100000, '', @lowestPrice);";
+            string query = @$"insert into sets values(@number, @name, @series, @url, @lowestPrice, @lowestPriceEver, @lastUpdate, @lowestPrice, 100000, NULL, @lowestPrice, NULL);";
 
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.Add("@number", SqlDbType.Int).Value = set.Number;

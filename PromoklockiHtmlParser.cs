@@ -16,6 +16,9 @@ namespace BricksAppFunction
         private static readonly Regex SeriesWithBorderRegex = new Regex(@"\d{5}.*-");
         private static readonly Regex CatalogNumberRegex = new Regex(@"\d{5}");
         private static readonly Regex PriceRegex = new Regex(@"<strong>\d*,\d*</strong>");
+        private static readonly Regex ShopRegex = new Regex(@"<td class=""valign"">.*</td>");
+        private static readonly Regex ShopAndPriceRegex = new Regex(@"<td class=""valign"">.*</td>(.|[\n\r])*?\d*,\d*</strong>");
+        private static readonly Regex LowestPriceRegex = new Regex(@"""lowPrice"": ""\d*\.\d*""");
         private static readonly Regex LowestPriceEverRegex = new Regex(@"<dt>Najniższa cena</dt><dd>\d*,\d*");
         private const string NajnizszaCenaElement = "<dt>Najniższa cena</dt><dd>";
 
@@ -39,8 +42,8 @@ namespace BricksAppFunction
                 int catalogNumber = GetCatalogNumber(title);
                 string name = GetName(title);
                 string series = GetSeries(title);
-                List<decimal> prices = GetPrices(data);
-                decimal lowestPrice = prices.Min();
+                List<(decimal price ,string shop)> pricesAndShops = GetPricesAndShops(data);
+                (decimal lowestPrice, string lowestShop) = pricesAndShops.OrderBy(p => p.price).First();
                 decimal lowestPriceEver = GetLowestPriceEver(data);
 
                 response.Close();
@@ -53,6 +56,7 @@ namespace BricksAppFunction
                     Series = series,
                     Link = url,
                     LowestPrice = lowestPrice,
+                    LowestShop = lowestShop,
                     LowestPriceEver = lowestPriceEver
                 };
             }
@@ -82,16 +86,57 @@ namespace BricksAppFunction
             return seriesWtihTrash.Remove(seriesWtihTrash.Length - 2, 2).Remove(0, 6);
         }
 
-        private static List<decimal> GetPrices(string doc)
+        private static List<(decimal price, string shop)> GetPricesAndShops(string doc)
         {
-            var prices = new List<decimal>();
-            foreach (Match match in PriceRegex.Matches(doc))
+            decimal lowestPrice = GetLowestPrice(doc);
+            var pricesAndShops = new List<(decimal price, string shop)>();
+
+            foreach (Match match in ShopAndPriceRegex.Matches(doc))
             {
-                string price = match.Value.Remove(match.Value.Length - 9, 9).Remove(0, 8).Replace(',', '.');
-                prices.Add(decimal.Parse(price));
+                string price = ExtractPrice(match.Value);
+                string shop = ExtractShop(match.Value);
+
+                pricesAndShops.Add((decimal.Parse(price), shop));
+
+                if(decimal.Parse(price) <= lowestPrice)
+                {
+                    break;
+                }
             }
 
-            return prices;
+            return pricesAndShops;
+        }
+
+        private static decimal GetLowestPrice(string doc)
+        {
+            Regex priceRegex = new Regex(@"\d*\.\d*");
+            string lowestPriceWithBorder = LowestPriceRegex.Match(doc).Value;
+
+            return decimal.Parse(priceRegex.Match(lowestPriceWithBorder).Value);
+        }
+
+
+        private static string ExtractPrice(string partOfDoc)
+        {
+            string priceWithBorder = PriceRegex.Match(partOfDoc).Value;
+            return priceWithBorder.Remove(priceWithBorder.Length - 9, 9).Remove(0, 8).Replace(',', '.');
+        }
+
+        private static string ExtractShop(string partOfDoc)
+        {
+            string shopWithBorder = ShopRegex.Match(partOfDoc).Value;
+            shopWithBorder = DeleteLinkForShop(shopWithBorder);
+            return shopWithBorder.Remove(shopWithBorder.Length - "</td>".Length, "</td>".Length).Remove(0, @"<td class=""valign"">".Length);
+        }
+
+        private static string DeleteLinkForShop(string shopWithBorder)
+        {
+            Regex ShopWithLink = new Regex(@"<a.*</a>");
+            Match match = ShopWithLink.Match(shopWithBorder);
+
+            return match.Success
+                ? shopWithBorder.Remove(match.Index, match.Length)
+                : shopWithBorder;
         }
 
         private static decimal GetLowestPriceEver(string doc)

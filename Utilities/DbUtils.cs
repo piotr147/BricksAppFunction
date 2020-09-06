@@ -23,12 +23,13 @@ namespace BricksAppFunction.Utilities
             using SqlConnection conn = new SqlConnection(str);
             conn.Open();
 
+            //TODO: archive lowest shop
             string query = @"
-                    Insert into SetsArchive
-                    select number, getdate(), dailyLowestPrice
-                    from Sets;
-                    Update Sets
-                    set dailyLowestPrice = 100000;";
+                Insert into SetsArchive
+                select number, getdate(), dailyLowestPrice, NULL
+                from Sets;
+                Update Sets
+                set dailyLowestPrice = 100000;";
 
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.ExecuteNonQuery();
@@ -89,7 +90,8 @@ namespace BricksAppFunction.Utilities
         public static void UpdateSetsInDb(SqlConnection conn, List<LegoSet> updatedSets)
         {
             UpdatePricesAndShops(conn, updatedSets);
-            UpdatesLastUpdates(conn);
+            UpdateLastUpdates(conn);
+            UpdateDailyLowests(conn);
         }
 
         private static void UpdatePricesAndShops(SqlConnection conn, List<LegoSet> updatedSets)
@@ -115,13 +117,20 @@ namespace BricksAppFunction.Utilities
             }
         }
 
-        private static void UpdatesLastUpdates(SqlConnection conn)
+        private static void UpdateLastUpdates(SqlConnection conn)
         {
             string query = $@"
-                update Sets set lastUpdate = @lastUpdate;
-                update Sets set dailyLowestPrice = lowestPrice where lowestPrice < dailyLowestPrice";
+                update Sets set lastUpdate = @lastUpdate;";
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.Add("@lastUpdate", SqlDbType.DateTime).Value = DateTime.Now;
+            cmd.ExecuteNonQuery();
+        }
+
+        private static void UpdateDailyLowests(SqlConnection conn)
+        {
+            string query = $@"
+                update Sets set dailyLowestPrice = lowestPrice, dailyLowestShop = lowestShop where lowestPrice < dailyLowestPrice";
+            using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.ExecuteNonQuery();
         }
 
