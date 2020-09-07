@@ -26,7 +26,7 @@ namespace BricksAppFunction.Utilities
             //TODO: archive lowest shop
             string query = @"
                 Insert into SetsArchive
-                select number, getdate(), dailyLowestPrice, NULL
+                select number, getdate(), dailyLowestPrice, dailylowestshop
                 from Sets;
                 Update Sets
                 set dailyLowestPrice = 100000;";
