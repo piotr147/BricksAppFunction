@@ -93,10 +93,16 @@ namespace BricksAppFunction
         private static string GetUpdateHtmlMessage(LegoSet set) =>
             $@"
                 Lego {set.Series} - {set.Number} - <strong>{set.Name}</strong>
-                {set.LowestShop}
+                {AddShopLine(set)}
                 {PriceInfoLine(set)}
                 {EventualLowestPriceEverHtml(set)}
                 <a href=""{set.Link}"">{set.Link}</a>";
+
+        private static object AddShopLine(LegoSet set) =>
+            $@"
+            <p>
+                <strong>{set.LowestShop}</strong>
+            </p>";
 
         private static string PriceInfoLine(LegoSet set)
         {
