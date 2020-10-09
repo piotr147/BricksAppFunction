@@ -11,21 +11,21 @@ namespace BricksAppFunction
 {
     public static class PromoklockiHtmlParser
     {
-        private static readonly Regex TitleElementRegex = new Regex(@"<h1 class=""htitle"">.*</h1>");
+        private static readonly Regex TitleElementRegex = new Regex(@"LEGO<sup>&reg;</sup> \d{5}.*</h1>");
         private static readonly Regex TitleRegex = new Regex(@"\d{5}.*<");
         private static readonly Regex SeriesWithBorderRegex = new Regex(@"\d{5}.*-");
         private static readonly Regex CatalogNumberRegex = new Regex(@"\d{5}");
-        private static readonly Regex PriceRegex = new Regex(@"<strong>\d*,\d*</strong>");
-        private static readonly Regex ShopRegex = new Regex(@"<td class=""valign"">.*</td>");
-        private static readonly Regex ShopAndPriceRegex = new Regex(@"<td class=""valign"">.*</td>(.|[\n\r])*?\d*,\d*</strong>");
+        private static readonly Regex PriceRegex = new Regex(@"\d*,\d*");
+        private static readonly Regex ShopRegex = new Regex(@"(?:(col-5 col-lg-2 order-1 align-self-center text-left"">)([\n\r])*).*(?:([\n\r]))");
+        private static readonly Regex ShopAndPriceRegex = new Regex(@"col-5 col-lg-2 order-1 align-self-center text-left(.|[\n\r])*?(?:</span>z)");
         private static readonly Regex LowestPriceRegex = new Regex(@"""lowPrice"": ""\d*\.\d*""");
-        private static readonly Regex LowestPriceEverRegex = new Regex(@"<dt>Najniższa cena</dt><dd>\d*,\d*");
-        private const string NajnizszaCenaElement = "<dt>Najniższa cena</dt><dd>";
+        private static readonly Regex LowestPriceEverRegex = new Regex(@"Najniższa cena</dt><dd class=""col-12 col-sm-8 col-md-6 col-lg-8"">\d*,\d*");
+        private const string NajnizszaCenaElement = @"Najniższa cena</dt><dd class=""col-12 col-sm-8 col-md-6 col-lg-8"">";
 
         public async static Task<LegoSet> GetSetInfo(string url)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            HttpWebResponse response = (HttpWebResponse)(await request.GetResponseAsync());
 
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -42,7 +42,7 @@ namespace BricksAppFunction
                 int catalogNumber = GetCatalogNumber(title);
                 string name = GetName(title);
                 string series = GetSeries(title);
-                List<(decimal price ,string shop)> pricesAndShops = GetPricesAndShops(data);
+                List<(decimal price, string shop)> pricesAndShops = GetPricesAndShops(data);
                 (decimal lowestPrice, string lowestShop) = pricesAndShops.OrderBy(p => p.price).First();
                 decimal lowestPriceEver = GetLowestPriceEver(data);
 
@@ -90,17 +90,24 @@ namespace BricksAppFunction
         {
             decimal lowestPrice = GetLowestPrice(doc);
             var pricesAndShops = new List<(decimal price, string shop)>();
+            var xd = ShopAndPriceRegex.Matches(doc);
 
-            foreach (Match match in ShopAndPriceRegex.Matches(doc))
+            foreach (Match match in xd)
             {
-                string price = ExtractPrice(match.Value);
-                string shop = ExtractShop(match.Value);
-
-                pricesAndShops.Add((decimal.Parse(price), shop));
-
-                if(decimal.Parse(price) <= lowestPrice)
+                try
                 {
-                    break;
+                    string price = ExtractPrice(match.Value);
+                    string shop = ExtractShop(match.Value);
+
+                    pricesAndShops.Add((decimal.Parse(price), shop));
+
+                    if (decimal.Parse(price) <= lowestPrice)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception)
+                {
                 }
             }
 
@@ -116,27 +123,19 @@ namespace BricksAppFunction
         }
 
 
-        private static string ExtractPrice(string partOfDoc)
-        {
-            string priceWithBorder = PriceRegex.Match(partOfDoc).Value;
-            return priceWithBorder.Remove(priceWithBorder.Length - 9, 9).Remove(0, 8).Replace(',', '.');
-        }
+        private static string ExtractPrice(string partOfDoc) =>
+            PriceRegex.Match(partOfDoc).Value;
 
         private static string ExtractShop(string partOfDoc)
         {
             string shopWithBorder = ShopRegex.Match(partOfDoc).Value;
-            shopWithBorder = DeleteLinkForShop(shopWithBorder);
-            return shopWithBorder.Remove(shopWithBorder.Length - "</td>".Length, "</td>".Length).Remove(0, @"<td class=""valign"">".Length);
+            return DeleteTrashFromShop(shopWithBorder);
         }
 
-        private static string DeleteLinkForShop(string shopWithBorder)
+        private static string DeleteTrashFromShop(string shopWithBorder)
         {
-            Regex ShopWithLink = new Regex(@"<a.*</a>");
-            Match match = ShopWithLink.Match(shopWithBorder);
-
-            return match.Success
-                ? shopWithBorder.Remove(match.Index, match.Length)
-                : shopWithBorder;
+            string shopWithoutTrash = shopWithBorder.Remove(0, @"col-5 col-lg-2 order-1 align-self-center text-left"" > ".Length);
+            return shopWithoutTrash.Replace(" ", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
         }
 
         private static decimal GetLowestPriceEver(string doc)
