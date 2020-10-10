@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using BricksAppFunction.Utilities;
+using EllipticCurve;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using SendGrid;
@@ -16,6 +17,7 @@ namespace BricksAppFunction
     public static class MonitorSubscriptions
     {
         private const int HourOfDailyReport = 22; // It's Azure's hour, not ours
+        private const int TimeoutMiliseconds = 10000;
         private static readonly SendGridClient _client = new SendGridClient(Environment.GetEnvironmentVariable("sendgrid_key"));
 
         [FunctionName("MonitorSubscriptions")]
@@ -29,14 +31,19 @@ namespace BricksAppFunction
             using (SqlConnection conn = new SqlConnection(str))
             {
                 conn.Open();
+                log.LogInformation($"Log1");
                 List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn);
-                List<LegoSet> updatedSets = await GetSetsToUpdate(sets);
-
+                log.LogInformation($"Log2");
+                List<LegoSet> updatedSets = await GetSetsToUpdate(sets, log);
+                log.LogInformation($"Log3");
                 DbUtils.UpdateWithInfoFromDb(conn, updatedSets);
+                log.LogInformation($"Log4");
                 Dictionary<int, MailMessage> messages = GetMessagesForUpdatedSets(updatedSets);
+                log.LogInformation($"Log5");
                 List<Subscription> subscriptions = DbUtils.GetActiveSubscriptions(conn);
-
+                log.LogInformation($"Log6");
                 DbUtils.UpdateSetsInDb(conn, updatedSets);
+                log.LogInformation($"Log7");
                 await SendEmails(subscriptions, messages, log);
             }
 
@@ -49,13 +56,29 @@ namespace BricksAppFunction
             }
         }
 
-        private async static Task<List<LegoSet>> GetSetsToUpdate(List<LegoSet> sets)
+        private async static Task<List<LegoSet>> GetSetsToUpdate(List<LegoSet> sets, ILogger log)
         {
             List<LegoSet> updatedSets = new List<LegoSet>();
-
+            int i = 0;
             foreach (LegoSet set in sets)
             {
-                LegoSet updatedSet = await PromoklockiHtmlParser.GetSetInfo(set.Link);
+                LegoSet updatedSet = new LegoSet();
+                log.LogInformation($"Set {i++}, {set.Name}");
+                try
+                {
+                    updatedSet = await PromoklockiHtmlParser.GetSetInfo(set.Link).TimeoutAfter(TimeoutMiliseconds);
+                }
+                catch (OperationCanceledException)
+                {
+                    log.LogInformation($"Timeout, {set.Name}");
+                    continue;
+                }
+                catch (Exception e)
+                {
+                    log.LogError($"{e.Message}");
+                    continue;
+                }
+
                 updatedSet.LastLowestPrice = set.LowestPrice;
                 if (updatedSet.LowestPrice != set.LowestPrice)
                 {
