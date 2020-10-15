@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace BricksAppFunction
+namespace BricksAppFunction.Utilities
 {
     public static class PromoklockiHtmlParser
     {

@@ -1,4 +1,5 @@
-﻿using SendGrid;
+﻿using BricksAppFunction.Models;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
