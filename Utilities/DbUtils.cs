@@ -7,6 +7,15 @@ namespace BricksAppFunction.Utilities
 {
     public static class DbUtils
     {
+        public static List<LegoSet> GetSetsWithEmailToSend(SqlConnection conn)
+        {
+            string query = @"select * from Sets where emailToSend = 1;";
+
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            using SqlDataReader reader = cmd.ExecuteReader();
+            return ReadSetsFromQueryResults(reader);
+        }
+
         public static bool UserExists(SqlConnection conn, string mail)
         {
             string query = @"select count(*) from Subscribers where mail = @mail and isdeleted = 0;";
@@ -68,7 +77,7 @@ namespace BricksAppFunction.Utilities
             return sets;
         }
 
-        public static void UpdateWithInfoFromDb(SqlConnection conn, List<LegoSet> updatedSets)
+        public static void UpdateSetsWithInfoFromDb(SqlConnection conn, List<LegoSet> updatedSets)
         {
             foreach (var set in updatedSets)
             {
@@ -104,6 +113,7 @@ namespace BricksAppFunction.Utilities
                     ,lastLowestPrice = @lastLowestPrice
                     ,lowestShop = @lowestShop
                     ,lastReportedLowestPrice = @lastReportedLowestPrice
+                    ,emailToSend = 1
                     where number = @catalogNumber;";
 
                 using SqlCommand cmd = new SqlCommand(query, conn);

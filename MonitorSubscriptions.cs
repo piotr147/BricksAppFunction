@@ -31,19 +31,12 @@ namespace BricksAppFunction
             using (SqlConnection conn = new SqlConnection(str))
             {
                 conn.Open();
-                log.LogInformation($"Log1");
                 List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn);
-                log.LogInformation($"Log2");
                 List<LegoSet> updatedSets = await GetSetsToUpdate(sets, log);
-                log.LogInformation($"Log3");
-                DbUtils.UpdateWithInfoFromDb(conn, updatedSets);
-                log.LogInformation($"Log4");
+                DbUtils.UpdateSetsWithInfoFromDb(conn, updatedSets);
                 Dictionary<int, MailMessage> messages = GetMessagesForUpdatedSets(updatedSets);
-                log.LogInformation($"Log5");
                 List<Subscription> subscriptions = DbUtils.GetActiveSubscriptions(conn);
-                log.LogInformation($"Log6");
                 DbUtils.UpdateSetsInDb(conn, updatedSets);
-                log.LogInformation($"Log7");
                 await SendEmails(subscriptions, messages, log);
             }
 
