@@ -25,6 +25,7 @@ namespace BricksAppFunction
             Dictionary<int, MailMessage> messages = MessageCreator.GetMessagesForUpdatedSets(updatedSets);
 
             await EmailSender.SendEmails(subscriptions, messages);
+            DbUtils.UpdateSetsAfterSendingEmails(conn, updatedSets);
         }
     }
 }

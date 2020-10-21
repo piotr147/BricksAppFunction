@@ -17,6 +17,26 @@ namespace BricksAppFunction.Utilities
             return ReadSetsFromQueryResults(reader);
         }
 
+        public static void UpdateSetsAfterSendingEmails(SqlConnection conn, List<LegoSet> sets)
+        {
+            foreach (var set in sets)
+            {
+                SetThatEmailHasBeenSent(conn, set);
+            }
+        }
+
+        private static void SetThatEmailHasBeenSent(SqlConnection conn, LegoSet set)
+        {
+            string query = @"
+                update sets
+                set emailToSend = 0
+                where number = @number";
+
+            using SqlCommand cmd = new SqlCommand(query, conn);
+            cmd.Parameters.Add("@number", SqlDbType.Float).Value = set.Number;
+            cmd.ExecuteNonQuery();
+        }
+
         public static bool UserExists(SqlConnection conn, string mail)
         {
             string query = @"select count(*) from Subscribers where mail = @mail and isdeleted = 0;";
