@@ -21,7 +21,7 @@ namespace BricksAppFunction
         private const int TimeoutMiliseconds = 10000;
         private static readonly SendGridClient _client = new SendGridClient(Environment.GetEnvironmentVariable("sendgrid_key"));
 
-        [FunctionName("MonitorSubscriptions")]
+//        [FunctionName("MonitorSubscriptions")]
         public async static Task Run([TimerTrigger("0 0 4-23 * * *")] TimerInfo myTimer, ILogger log)
         {
             Stopwatch stopwatch = new Stopwatch();

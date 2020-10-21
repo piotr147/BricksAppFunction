@@ -9,56 +9,56 @@ namespace BricksAppFunction
     {
         private const int NUMBER_OF_FUNCTIONS = 10;
 
-        [FunctionName("UpdateSetsStep1")]
-        public async static Task UpdateSetsStep1([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep01")]
+        public async static Task UpdateSetsStep01([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(1, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep2")]
-        public async static Task UpdateSetsStep2([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep02")]
+        public async static Task UpdateSetsStep02([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(2, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep3")]
-        public async static Task UpdateSetsStep3([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep03")]
+        public async static Task UpdateSetsStep03([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(3, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep4")]
-        public async static Task UpdateSetsStep4([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep04")]
+        public async static Task UpdateSetsStep04([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(4, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep5")]
-        public async static Task UpdateSetsStep5([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep05")]
+        public async static Task UpdateSetsStep05([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(5, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep6")]
-        public async static Task UpdateSetsStep6([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep06")]
+        public async static Task UpdateSetsStep06([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(6, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep7")]
-        public async static Task UpdateSetsStep7([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep07")]
+        public async static Task UpdateSetsStep07([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(7, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep8")]
-        public async static Task UpdateSetsStep8([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep08")]
+        public async static Task UpdateSetsStep08([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(8, NUMBER_OF_FUNCTIONS);
         }
 
-        [FunctionName("UpdateSetsStep9")]
-        public async static Task UpdateSetsStep9([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        [FunctionName("UpdateSetsStep09")]
+        public async static Task UpdateSetsStep09([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(9, NUMBER_OF_FUNCTIONS);
         }
