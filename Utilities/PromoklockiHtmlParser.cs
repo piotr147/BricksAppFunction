@@ -125,7 +125,7 @@ namespace BricksAppFunction.Utilities
 
 
         private static string ExtractPrice(string partOfDoc) =>
-            PriceRegex.Match(partOfDoc).Value;
+            PriceRegex.Match(partOfDoc).Value.Replace(',', '.');
 
         private static string ExtractShop(string partOfDoc)
         {
