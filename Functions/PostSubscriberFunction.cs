@@ -14,9 +14,9 @@ using BricksAppFunction.Utilities;
 
 namespace BricksAppFunction
 {
-    public static class PostSubscriber
+    public static class PostSubscriberFunction
     {
-        [FunctionName("PostSubscriber")]
+        [FunctionName("PostSubscriberFunction")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)

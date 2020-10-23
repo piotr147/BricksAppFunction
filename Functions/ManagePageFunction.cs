@@ -8,9 +8,9 @@ using BricksAppFunction.Utilities;
 
 namespace BricksAppFunction
 {
-    public static class ManagePage
+    public static class ManagePageFunction
     {
-        [FunctionName("ManagePage")]
+        [FunctionName("ManagePageFunction")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             ILogger log) =>

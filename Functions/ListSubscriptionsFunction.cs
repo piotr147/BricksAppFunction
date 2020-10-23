@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
 using System.Net;
 using System.Net.Http;
@@ -16,9 +15,9 @@ using System.Threading.Tasks;
 
 namespace BricksAppFunction
 {
-    public static class ListSubscriptions
+    public static class ListSubscriptionsFunction
     {
-        [FunctionName("ListSubscriptions")]
+        [FunctionName("ListSubscriptionsFunction")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             ILogger log)

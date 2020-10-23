@@ -12,9 +12,9 @@ using System.Data;
 
 namespace BricksAppFunction
 {
-    public static class DeleteSubscription
+    public static class DeleteSubscriptionFunction
     {
-        [FunctionName("DeleteSubscription")]
+        [FunctionName("DeleteSubscriptionFunction")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)

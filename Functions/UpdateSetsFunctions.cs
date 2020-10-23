@@ -9,6 +9,12 @@ namespace BricksAppFunction
     {
         private const int NUMBER_OF_FUNCTIONS = 10;
 
+        [FunctionName("UpdateSetsStep0")]
+        public async static Task UpdateSetsStep0([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
+        {
+            await SetUpdater.UpdateSetsWithNumberBeingReminderOf(0, NUMBER_OF_FUNCTIONS);
+        }
+
         [FunctionName("UpdateSetsStep01")]
         public async static Task UpdateSetsStep01([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
@@ -61,12 +67,6 @@ namespace BricksAppFunction
         public async static Task UpdateSetsStep09([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
         {
             await SetUpdater.UpdateSetsWithNumberBeingReminderOf(9, NUMBER_OF_FUNCTIONS);
-        }
-
-        [FunctionName("UpdateSetsStep10")]
-        public async static Task UpdateSetsStep10([TimerTrigger("0 50 3-22 * * *")] TimerInfo myTimer, ILogger log)
-        {
-            await SetUpdater.UpdateSetsWithNumberBeingReminderOf(10, NUMBER_OF_FUNCTIONS);
         }
     }
 }

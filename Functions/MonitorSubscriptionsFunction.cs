@@ -15,13 +15,13 @@ using SendGrid.Helpers.Mail;
 
 namespace BricksAppFunction
 {
-    public static class MonitorSubscriptions
+    public static class MonitorSubscriptionsFunction
     {
         private const int HourOfDailyReport = 22; // It's Azure's hour, not ours
         private const int TimeoutMiliseconds = 10000;
         private static readonly SendGridClient _client = new SendGridClient(Environment.GetEnvironmentVariable("sendgrid_key"));
 
-//        [FunctionName("MonitorSubscriptions")]
+        //        [FunctionName("MonitorSubscriptionsFunction")]
         public async static Task Run([TimerTrigger("0 0 4-23 * * *")] TimerInfo myTimer, ILogger log)
         {
             Stopwatch stopwatch = new Stopwatch();
