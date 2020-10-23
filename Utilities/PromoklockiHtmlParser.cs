@@ -17,7 +17,7 @@ namespace BricksAppFunction.Utilities
         private static readonly Regex SeriesWithBorderRegex = new Regex(@"\d{5}.*-");
         private static readonly Regex CatalogNumberRegex = new Regex(@"\d{5}");
         private static readonly Regex PriceRegex = new Regex(@"\d*,\d*");
-        private static readonly Regex ShopRegex = new Regex(@"(?:(col-5 col-lg-2 order-1 align-self-center text-left"">)([\n\r])*).*(?:([\n\r]))");
+        private static readonly Regex ShopRegex = new Regex(@"(?:(col-5 col-lg-2 order-1 align-self-center text-left"">)([\n\r])*)[^<\n\r]*");
         private static readonly Regex ShopAndPriceRegex = new Regex(@"col-5 col-lg-2 order-1 align-self-center text-left(.|[\n\r])*?(?:</span>z)");
         private static readonly Regex LowestPriceRegex = new Regex(@"""lowPrice"": ""\d*\.\d*""");
         private static readonly Regex LowestPriceEverRegex = new Regex(@"Najniższa cena</dt><dd class=""col-12 col-sm-8 col-md-6 col-lg-8"">\d*,\d*");
