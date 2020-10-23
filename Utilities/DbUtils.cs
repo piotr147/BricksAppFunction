@@ -22,6 +22,7 @@ namespace BricksAppFunction.Utilities
             foreach (var set in sets)
             {
                 SetThatEmailHasBeenSent(conn, set);
+                UpdateLastReportedPrice(conn, set);
             }
         }
 
@@ -91,6 +92,7 @@ namespace BricksAppFunction.Utilities
                     LowestPriceEver = (decimal)reader.GetDouble(5),
                     LastUpdate = reader.GetDateTime(6),
                     LastLowestPrice = reader.IsDBNull(7) ? null : (decimal?)reader.GetFloat(7),
+                    DailyLowestPrice = reader.IsDBNull(8) ? (decimal)reader.GetDouble(4) : (decimal)reader.GetFloat(7),
                     LastReportedLowestPrice = (decimal)reader.GetFloat(10)
                 });
             }

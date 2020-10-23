@@ -12,7 +12,7 @@ namespace BricksAppFunction
     public static class SendNotificationsFunction
     {
         [FunctionName("SendNotificationsFunction")]
-        public async static Task Run([TimerTrigger("0 0 4-23 * * *")] TimerInfo myTimer, ILogger log)
+        public async static Task Run([TimerTrigger("0 39 4-23 * * *")] TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 

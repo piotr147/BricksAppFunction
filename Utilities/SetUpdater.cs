@@ -38,7 +38,10 @@ namespace BricksAppFunction.Utilities
                     continue;
                 }
 
-                updatedSet.LastLowestPrice = set.LowestPrice;
+                updatedSet
+                    .WithLastLowestPrice(set.LowestPrice)
+                    .WithDailyLowestPrice(GetDailyLowestPrice(set, updatedSet));
+
                 if (updatedSet.LowestPrice != set.LowestPrice)
                 {
                     updatedSets.Add(updatedSet);
@@ -47,5 +50,10 @@ namespace BricksAppFunction.Utilities
 
             return updatedSets;
         }
+
+        private static decimal GetDailyLowestPrice(LegoSet set, LegoSet updatedSet)
+            => set.DailyLowestPrice <= updatedSet.LowestPrice
+                ? set.DailyLowestPrice
+                : updatedSet.LowestPrice;
     }
 }

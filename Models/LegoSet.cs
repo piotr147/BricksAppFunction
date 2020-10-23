@@ -23,5 +23,17 @@ namespace BricksAppFunction.Models
             LastReportedLowestPrice = price;
             return this;
         }
+
+        public LegoSet WithLastLowestPrice(decimal price)
+        {
+            LastLowestPrice = price;
+            return this;
+        }
+
+        public LegoSet WithDailyLowestPrice(decimal price)
+        {
+            DailyLowestPrice = price;
+            return this;
+        }
     }
 }
