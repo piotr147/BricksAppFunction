@@ -137,6 +137,7 @@ namespace BricksAppFunction.Utilities
                     ,lowestShop = @lowestShop
                     ,lastReportedLowestPrice = @lastReportedLowestPrice
                     ,emailToSend = 1
+                    ,lastPriceUpdate = GETDATE()
                     where number = @catalogNumber;";
 
                 using SqlCommand cmd = new SqlCommand(query, conn);
@@ -162,7 +163,9 @@ namespace BricksAppFunction.Utilities
         private static void UpdateDailyLowests(SqlConnection conn)
         {
             string query = $@"
-                update Sets set dailyLowestPrice = lowestPrice, dailyLowestShop = lowestShop where lowestPrice < dailyLowestPrice";
+                update Sets
+                set dailyLowestPrice = lowestPrice, dailyLowestShop = lowestShop
+                where lowestPrice < dailyLowestPrice";
             using SqlCommand cmd = new SqlCommand(query, conn);
             cmd.ExecuteNonQuery();
         }
