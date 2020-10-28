@@ -21,7 +21,7 @@ namespace BricksAppFunction
         private static readonly Regex CatalogNumberRegex = new Regex(@"-\d{5}-");
         private static readonly Regex PromoklockiUrlRegex = new Regex(@"https://promoklocki\.pl/lego-.*\d{5}-.*p\d*");
 
-        [FunctionName("AddSubscriptionFunction")]
+        [FunctionName("AddSubscription")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
             ILogger log)

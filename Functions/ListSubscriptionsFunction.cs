@@ -17,7 +17,7 @@ namespace BricksAppFunction
 {
     public static class ListSubscriptionsFunction
     {
-        [FunctionName("ListSubscriptionsFunction")]
+        [FunctionName("ListSubscriptions")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
             ILogger log)

@@ -14,7 +14,7 @@ namespace BricksAppFunction
 {
     public static class DeleteSubscriptionFunction
     {
-        [FunctionName("DeleteSubscriptionFunction")]
+        [FunctionName("DeleteSubscription")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
