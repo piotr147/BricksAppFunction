@@ -12,7 +12,9 @@ namespace BricksAppFunction.Utilities
     {
         private static readonly SendGridClient _client = new SendGridClient(Environment.GetEnvironmentVariable("sendgrid_key"));
 
-        public async static Task SendEmails(List<Subscription> subscriptions, Dictionary<int, MailMessage> messages)
+        public async static Task SendEmails(
+            List<Subscription> subscriptions,
+            Dictionary<(int number, bool isBigUpdate), MailMessage> messages)
         {
             string subject = $"Lego update {DateTime.Now.Day:D2}.{DateTime.Now.Month:D2}";
             List<string> mails = subscriptions.Select(s => s.Mail).Distinct().ToList();
@@ -44,17 +46,20 @@ namespace BricksAppFunction.Utilities
             }
         }
 
-        private static List<string> GetPlainMessagesForSpecificSubscriber(List<(int number, bool onlyBig)> setNumbers, Dictionary<int, MailMessage> messages) =>
+        private static List<string> GetPlainMessagesForSpecificSubscriber(
+            List<(int number, bool onlyBig)> setNumbers,
+            Dictionary<(int number, bool isBigUpdate), MailMessage> messages) =>
             messages
-                .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate || m.Value.IsLowestPriceEver)))
+                .Where(m => setNumbers.Any(s => s.number == m.Key.number && s.onlyBig == m.Key.isBigUpdate))
                 .OrderBy(m => m.Value.DiffPercent)
                 .Select(m => m.Value.Plain)
                 .ToList();
 
-        private static List<string> GetHtmlMessagesForSpecificSubscriber(List<(int number, bool onlyBig)> setNumbers, Dictionary<int, MailMessage> messages) =>
+        private static List<string> GetHtmlMessagesForSpecificSubscriber(
+            List<(int number, bool onlyBig)> setNumbers,
+            Dictionary<(int number, bool isBigUpdate), MailMessage> messages) =>
             messages
-                .Where(m => setNumbers.Any(s => s.number == m.Key && (!s.onlyBig || m.Value.IsBigUpdate || m.Value.IsLowestPriceEver)))
-                .OrderBy(m => m.Value.DiffPercent)
+                .Where(m => setNumbers.Any(s => s.number == m.Key.number && s.onlyBig == m.Key.isBigUpdate)).OrderBy(m => m.Value.DiffPercent)
                 .Select(m => m.Value.Html)
                 .ToList();
     }

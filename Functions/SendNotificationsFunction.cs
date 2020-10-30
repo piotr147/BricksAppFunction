@@ -22,7 +22,7 @@ namespace BricksAppFunction
             List<LegoSet> updatedSets = DbUtils.GetSetsWithEmailToSend(conn);
 
             List<Subscription> subscriptions = DbUtils.GetActiveSubscriptions(conn);
-            Dictionary<int, MailMessage> messages = MessageCreator.GetMessagesForUpdatedSets(updatedSets);
+            Dictionary<(int number, bool isBigUpdate), MailMessage> messages = MessageCreator.GetMessagesForUpdatedSets(updatedSets);
 
             await EmailSender.SendEmails(subscriptions, messages);
             DbUtils.UpdateSetsAfterSendingEmails(conn, updatedSets);
