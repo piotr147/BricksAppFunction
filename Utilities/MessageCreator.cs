@@ -37,11 +37,18 @@ namespace BricksAppFunction.Utilities
                             IsBigUpdate = false,
                             IsLowestPriceEver = IsLowestPrice(set)
                         });
+
+                        UpdateLastReportedLowestPrice(set);
                     }
                 }
             }
 
             return messages;
+        }
+
+        private static void UpdateLastReportedLowestPrice(LegoSet set)
+        {
+            set.LastReportedLowestPrice = set.LowestPrice;
         }
 
         private static string GetUpdateHtmlMessage(LegoSet set, decimal priceFrom, decimal priceTo) =>
@@ -105,16 +112,8 @@ namespace BricksAppFunction.Utilities
                 ? ""
                 : @"LOWEST PRICE EVER\n";
 
-        private static bool CheckForBigUpdates(LegoSet set)
-        {
-            if (IsBigUpdate(set))
-            {
-                set.LastReportedLowestPrice = set.LowestPrice;
-                return true;
-            }
-
-            return false;
-        }
+        private static bool CheckForBigUpdates(LegoSet set) =>
+            IsBigUpdate(set);
 
         private static bool IsBigUpdate(LegoSet set) =>
             Math.Abs(CalculateDiffPercent(set)) > 0.01f;

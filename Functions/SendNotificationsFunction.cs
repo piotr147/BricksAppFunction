@@ -12,11 +12,13 @@ namespace BricksAppFunction
     public static class SendNotificationsFunction
     {
         [FunctionName("SendNotificationsFunction")]
-        public async static Task Run([TimerTrigger("0 39 4-23 * * *")] TimerInfo myTimer, ILogger log)
+        public async static Task Run([TimerTrigger("0 0 4-23 * * *")] TimerInfo myTimer, ILogger log)
+
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
             string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+
             using SqlConnection conn = new SqlConnection(str);
             conn.Open();
             List<LegoSet> updatedSets = DbUtils.GetSetsWithEmailToSend(conn);

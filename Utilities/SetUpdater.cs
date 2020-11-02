@@ -14,6 +14,7 @@ namespace BricksAppFunction.Utilities
         public async static Task UpdateSetsWithNumberBeingReminderOf(int remainder, int divisor)
         {
             string str = Environment.GetEnvironmentVariable("sqldb_connectionstring");
+
             using SqlConnection conn = new SqlConnection(str);
             conn.Open();
             List<LegoSet> sets = DbUtils.GetSetsOfActiveSubscriptions(conn).Where(s => s.Number % divisor == remainder % divisor).ToList();
