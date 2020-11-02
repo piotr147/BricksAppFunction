@@ -18,8 +18,8 @@ namespace BricksAppFunction
 {
     public static class AddSubscriptionFunction
     {
-        private static readonly Regex CatalogNumberRegex = new Regex(@"-\d{5}-");
-        private static readonly Regex PromoklockiUrlRegex = new Regex(@"https://promoklocki\.pl/lego-.*\d{5}-.*p\d*");
+        private static readonly Regex CatalogNumberRegex = new Regex(@"-\d{3,8}-");
+        private static readonly Regex PromoklockiUrlRegex = new Regex(@"https://promoklocki\.pl/lego-.*\d{3,8}-.*p\d*");
 
         [FunctionName("AddSubscription")]
         public static async Task<IActionResult> Run(

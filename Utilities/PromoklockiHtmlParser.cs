@@ -12,10 +12,10 @@ namespace BricksAppFunction.Utilities
 {
     public static class PromoklockiHtmlParser
     {
-        private static readonly Regex TitleElementRegex = new Regex(@"LEGO<sup>&reg;</sup> \d{5}.*</h1>");
-        private static readonly Regex TitleRegex = new Regex(@"\d{5}.*<");
-        private static readonly Regex SeriesWithBorderRegex = new Regex(@"\d{5}.*-");
-        private static readonly Regex CatalogNumberRegex = new Regex(@"\d{5}");
+        private static readonly Regex TitleElementRegex = new Regex(@"LEGO<sup>&reg;</sup> \d{3,8}.*</h1>");
+        private static readonly Regex TitleRegex = new Regex(@"\d{3,8}.*<");
+        private static readonly Regex SeriesWithBorderRegex = new Regex(@"\d{3,8}.*-");
+        private static readonly Regex CatalogNumberRegex = new Regex(@"\d{3,8}");
         private static readonly Regex PriceRegex = new Regex(@"\d*,\d*");
         private static readonly Regex ShopRegex = new Regex(@"(?:(col-5 col-lg-2 order-1 align-self-center text-left"">)([\n\r])*)[^<\n\r]*");
         private static readonly Regex ShopAndPriceRegex = new Regex(@"col-5 col-lg-2 order-1 align-self-center text-left(.|[\n\r])*?(?:</span>z)");
