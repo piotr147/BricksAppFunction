@@ -1,6 +1,6 @@
 # Bricks App Functions
 
-Project used for observing prices of Lego sets. User can subscribe set and gets notified when lowest price changes.
+Project used for monitoring prices of Lego sets. User can subscribe set and gets notified when lowest price changes.
 
 ## Technologies
 * .Net Core
@@ -14,12 +14,6 @@ Every X minutes (for example every 10 minutes) Azure time trigger function proce
 
 Azure funcitons Http triggers are used for creating and managing subscriptions.
 
-## Usage
-
-Page where user can create new subscription or manage an existing one:
-
-![manage page](https://github.com/piotr147/BricksAppFunction/blob/master/Images/managePage.png)
-
-Example mail with price updates:
+## Example mail with price updates
 
 ![mail example](https://github.com/piotr147/BricksAppFunction/blob/master/Images/mail.png)
