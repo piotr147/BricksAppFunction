@@ -1,6 +1,6 @@
 # Bricks App Functions
 
-Project used for monitoring prices of Lego sets. User can subscribe set and gets notified when lowest price changes.
+Project used for monitoring prices of Lego sets. User can subscribe a set and gets notified when lowest price changes.
 
 ## Technologies
 * .Net Core
